@@ -16,7 +16,6 @@ def main():
         button_dict = {
             "csv_to_db_btn": csv_to_sqlite_frame,
             "edit_db_btn": edit_sqlite_frame,
-            "edit_csv_btn": edit_csv_frame,
             "create_db_btn": create_sqlite_frame,
             "add_data_to_db_btn": add_data_to_db_frame,
             "modify_db_btn": modify_sqlite_frame,
@@ -51,7 +50,23 @@ def main():
                 opt_checkbox.configure(text = "Same as CSV file")
                 tree_label.config(text="Select CSV file to see tree view!")
             
-
+    def checkbox_edit_ops(selected):
+        if selected == "A":
+            if checkbox_edit_sqlite.get():
+                checkbox_edit_csv.deselect()
+                choose_file_to_edit_btn.configure(text = "Choose SQlite file")
+                edit_label.config(text="Select Sqlite file to see tree view!")
+            else:
+                checkbox_edit_sqlite.select()
+        elif selected == "B":
+            if checkbox_edit_csv.get():
+                checkbox_edit_sqlite.deselect()
+                choose_file_to_edit_btn.configure(text = "Choose CSV file")
+                edit_label.config(text="Select CSV file to see tree view!")
+            else:
+                checkbox_edit_sqlite.select()
+                choose_file_to_edit_btn.configure(text = "Choose SQlite file")
+                edit_label.config(text="Select Sqlite file to see tree view!")
 
     win = Tk()
     win.geometry("1440x680+10+10")
@@ -79,10 +94,6 @@ def main():
     edit_db_btn = ctk.CTkButton(tab_frame, text="Edit Sqlite", text_color="black", font=("poppins", 14, 'bold') ,fg_color="#7BF1A8", hover_color="#05DF72",
                                   border_color="#2AA63E", border_width=2, corner_radius=10, command=lambda name = "edit_db_btn":clickedButton(name))
     edit_db_btn.pack(side = 'left', padx = 8)
-
-    edit_csv_btn = ctk.CTkButton(tab_frame, text="Edit CSV", text_color="black", font=("poppins", 14, 'bold') ,fg_color="#7BF1A8", hover_color="#05DF72",
-                                  border_color="#2AA63E", border_width=2, corner_radius=10, command=lambda name = "edit_csv_btn":clickedButton(name))
-    edit_csv_btn.pack(side = 'left', padx = 8)
 
     create_db_btn = ctk.CTkButton(tab_frame, text="Create Sqlite", text_color="black", font=("poppins", 14, 'bold') ,fg_color="#7BF1A8", hover_color="#05DF72",
                                   border_color="#2AA63E", border_width=2, corner_radius=10, command=lambda name = "create_db_btn":clickedButton(name))
@@ -175,11 +186,48 @@ def main():
     option2_frame.grid_columnconfigure(0, weight=1)
     option2_frame.grid_columnconfigure(1, weight=1)
 
-    edit_sqlite_frame = Frame(feature_frame, bg="blue")
-    edit_sqlite_frame.propagate(False)
+    # Complete frame to edit and manipulate data (SQlite and CSV)
 
-    edit_csv_frame = Frame(feature_frame, bg="green")
-    edit_csv_frame.propagate(False)
+    edit_sqlite_frame = Frame(feature_frame, bg="white")
+    edit_sqlite_frame.propagate(False)
+    
+    # Area to select file for edit 
+
+    file_select_frame = Frame(edit_sqlite_frame, height=50, relief='ridge', bd=2)
+    file_select_frame.propagate(False)
+    file_select_frame.pack(fill=X, side='top', anchor='n', padx=4, pady=(4, 0))
+
+    # checkbox
+    
+    checkbox_edit_sqlite = ctk.CTkCheckBox(file_select_frame, text="Edit SQlite", command=lambda: checkbox_edit_ops("A"),
+                                         fg_color="#FF8904", hover_color="#FFB86A")
+    checkbox_edit_sqlite.pack(side='left', anchor='w', padx=4, pady = 8)
+    checkbox_edit_csv = ctk.CTkCheckBox(file_select_frame, text="Edit CSV", command=lambda: checkbox_edit_ops("B"),
+                                         fg_color="#FF8904", hover_color="#FFB86A")
+    checkbox_edit_csv.pack(side='left', anchor='w', padx=4, pady = 8)
+    
+    checkbox_edit_sqlite.select() 
+
+    # choose file button
+
+    choose_file_to_edit_btn = ctk.CTkButton(file_select_frame, text="Choose Sqlite File", font=("poppins", 14, 'bold'), text_color="black", bg_color="white",
+                                    fg_color="#FFB86A", hover_color="#FF8904", border_color="#F54927", border_width=1, corner_radius=10,
+                                    height=40,width=150)
+    choose_file_to_edit_btn.pack(side = 'left', anchor = 'w', padx = 4, pady = 8)
+
+    # label to display file name
+
+    file_name_to_edit_label = Label(file_select_frame, text="Hello World this is a file to grow the area of the sub urban company and mcuh more", font=("poppins", 10), fg="green", bg="white", justify='left')
+    file_name_to_edit_label.pack(side='left', anchor='w', padx=4, pady=8)
+
+    # Frame to edit the data. Tree View inside the edit frame
+
+    edit_frame = Frame(edit_sqlite_frame, bg="white", relief='ridge', bd=2)
+    edit_frame.propagate(False)
+    edit_frame.pack(fill='both', expand=True, padx=4, pady=4, side='top', anchor='n')
+
+    edit_label = Label(edit_frame, text="Select Sqlite file to see tree view!", font=("poppins", 18, 'bold'), fg="#4F39F6", bg="white")
+    edit_label.place(relx=0.5, rely=0.5, anchor='center')
 
     create_sqlite_frame = Frame(feature_frame, bg="yellow")
     create_sqlite_frame.propagate(False)
