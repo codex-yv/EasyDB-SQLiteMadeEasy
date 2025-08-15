@@ -2,7 +2,7 @@ from tkinter import *
 from ttk import Treeview
 import customtkinter as ctk
 from importlib.resources import files
-import Easydb.assets.logo
+import assets.logo
 import csv
 
 def main():
@@ -15,7 +15,6 @@ def main():
         # Dictionary maps names to frame references, NOT to .pack() calls
         button_dict = {
             "csv_to_db_btn": csv_to_sqlite_frame,
-            "db_to_csv_btn": sqlite_to_csv_frame,
             "edit_db_btn": edit_sqlite_frame,
             "edit_csv_btn": edit_csv_frame,
             "create_db_btn": create_sqlite_frame,
@@ -28,11 +27,36 @@ def main():
         if frame_to_show:
             frame_to_show.pack(fill='both', expand=True, padx=2, pady=2)
 
+    def checkbox_operations(selected):
+        if selected == "A":
+            if checkbox_csv_to_db.get():
+                checkbox_db_to_csv.deselect()
+                choose_file_btn.configure(text = "Choose CSV file")
+                db_name_entry.configure(placeholder_text = "Enter Sqlite name")
+                opt_checkbox.configure(text = "Same as CSV file")
+                tree_label.config(text="Select CSV file to see tree view!")
+            else:
+                checkbox_csv_to_db.select()
+        elif selected == "B":
+            if checkbox_db_to_csv.get():
+                checkbox_csv_to_db.deselect()
+                choose_file_btn.configure(text = "Choose Sqlite file")
+                db_name_entry.configure(placeholder_text = "Enter CSV file name")
+                opt_checkbox.configure(text = "Same as SQlite file")
+                tree_label.config(text="Select SQlite file to see tree view!")
+            else:
+                checkbox_csv_to_db.select()
+                choose_file_btn.configure(text = "Choose CSV file")
+                db_name_entry.configure(placeholder_text = "Enter Sqlite name")
+                opt_checkbox.configure(text = "Same as CSV file")
+                tree_label.config(text="Select CSV file to see tree view!")
+            
+
 
     win = Tk()
     win.geometry("1440x680+10+10")
     win.title("EasyDB")
-    icon_path = icon_path = files(Easydb.assets.logo).joinpath("logo.ico")
+    icon_path = icon_path = files(assets.logo).joinpath("logo.ico")
     win.iconbitmap(icon_path)
 
     # main body frame --> It will hold all the content.
@@ -51,10 +75,6 @@ def main():
     csv_to_db_btn = ctk.CTkButton(tab_frame, text="CSV to Sqlite", text_color="black", font=("poppins", 14, 'bold') ,fg_color="#7BF1A8", hover_color="#05DF72",
                                   border_color="#2AA63E", border_width=2, corner_radius=10, command=lambda name = "csv_to_db_btn":clickedButton(name))
     csv_to_db_btn.pack(side = 'left', padx = 8)
-
-    db_to_csv_btn = ctk.CTkButton(tab_frame, text="Sqlite to CSV", text_color="black", font=("poppins", 14, 'bold') ,fg_color="#7BF1A8", hover_color="#05DF72",
-                                  border_color="#2AA63E", border_width=2, corner_radius=10, command=lambda name = "db_to_csv_btn":clickedButton(name))
-    db_to_csv_btn.pack(side = 'left', padx = 8)
 
     edit_db_btn = ctk.CTkButton(tab_frame, text="Edit Sqlite", text_color="black", font=("poppins", 14, 'bold') ,fg_color="#7BF1A8", hover_color="#05DF72",
                                   border_color="#2AA63E", border_width=2, corner_radius=10, command=lambda name = "edit_db_btn":clickedButton(name))
@@ -89,7 +109,7 @@ def main():
 
     # tree frame to show data of the csv file in tabular form
 
-    tree_frame = Frame(csv_to_sqlite_frame, bg="white", height=440)
+    tree_frame = Frame(csv_to_sqlite_frame, bg="white", height=440, relief='ridge', bd=2)
     tree_frame.pack(fill=X, side='top', anchor='n', pady=4, padx=4, ipady=0)
 
     tree_label = Label(tree_frame, text="Select CSV file to see tree view!", font=("poppins", 18, 'bold'), fg="#4F39F6", bg="white")
@@ -114,6 +134,14 @@ def main():
     file_name_label = Label(option1_frame, text="Hello World this is a file to grow the area of the sub urban company and mcuh more", font=("poppins", 10), fg="green", bg="white", justify='left')
     file_name_label.pack(side='top', anchor='nw', padx=4)
 
+    checkbox_csv_to_db = ctk.CTkCheckBox(option1_frame, text="CSV to SQlite", command=lambda: checkbox_operations("A"),
+                                         fg_color="#FF8904", hover_color="#FFB86A")
+    checkbox_csv_to_db.pack(side='top', anchor='nw', padx=4, pady = 8)
+    checkbox_db_to_csv = ctk.CTkCheckBox(option1_frame, text="SQlite to CSV", command=lambda: checkbox_operations("B"),
+                                         fg_color="#FF8904", hover_color="#FFB86A")
+    checkbox_db_to_csv.pack(side='top', anchor='nw', padx=4)
+    
+    checkbox_csv_to_db.select()
     # frame for other activities on CSV file
 
     option2_frame = Frame(options_frame, bg="white")
@@ -146,9 +174,6 @@ def main():
     # Optional: Make columns expand with weight if you're using grid layout
     option2_frame.grid_columnconfigure(0, weight=1)
     option2_frame.grid_columnconfigure(1, weight=1)
-
-    sqlite_to_csv_frame = Frame(feature_frame, bg="red")
-    sqlite_to_csv_frame.propagate(False)
 
     edit_sqlite_frame = Frame(feature_frame, bg="blue")
     edit_sqlite_frame.propagate(False)
