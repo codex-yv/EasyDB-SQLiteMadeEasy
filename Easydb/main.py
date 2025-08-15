@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from ttk import Treeview
 import customtkinter as ctk
 from importlib.resources import files
@@ -27,7 +28,11 @@ def main():
             frame_to_show.pack(fill='both', expand=True, padx=2, pady=2)
 
     def checkbox_operations(selected):
-        if selected == "A":
+        '''
+        This function helps to change the UI of the app as per requirement. In one click we can switch
+        from CSV to SQlite or SQlite to CSV
+        '''
+        if selected == "A": 
             if checkbox_csv_to_db.get():
                 checkbox_db_to_csv.deselect()
                 choose_file_btn.configure(text = "Choose CSV file")
@@ -51,6 +56,10 @@ def main():
                 tree_label.config(text="Select CSV file to see tree view!")
             
     def checkbox_edit_ops(selected):
+        '''
+        This function also helps in changing the UI of the app. Depending on the situation weather you want to
+        switch from Edit CSV file or Edit SQlite file.
+        '''
         if selected == "A":
             if checkbox_edit_sqlite.get():
                 checkbox_edit_csv.deselect()
@@ -67,6 +76,50 @@ def main():
                 checkbox_edit_sqlite.select()
                 choose_file_to_edit_btn.configure(text = "Choose SQlite file")
                 edit_label.config(text="Select Sqlite file to see tree view!")
+
+    def validate_selection():
+
+        '''
+        This function helps in the valid selection of the DataTypes and properties.
+        It ensures the proper combination of both of them.
+        '''
+
+        selected_type = data_types[data_type_var.get()] if data_type_var.get() >= 0 else None
+        errors = []
+
+        if auto_inc_var.get():
+            if selected_type != 'INTEGER':
+                errors.append("Auto Increment is only valid with INTEGER type.")
+            if not primary_key_var.get():
+                errors.append("Auto Increment must be used with Primary Key.")
+
+        if errors:
+            messagebox.showerror("Invalid Selection", "\n".join(errors))
+            auto_inc_var.set(False)  # Reset Auto Increment if invalid
+
+    
+    def print_selection():
+
+        '''
+        Currently used to print the selected DataTypes and Properties. Soon It will be the main function 
+        to add to the Tree View.
+        '''
+
+        if data_type_var.get() == -1:
+            messagebox.showwarning("No Data Type", "Please select a data type.")
+            return
+
+        selection = [data_types[data_type_var.get()]] # gets the selection from the DataTypes.
+
+        if primary_key_var.get():
+            selection.append("PRIMARY KEY")
+        if auto_inc_var.get():
+            selection.append("AUTO INCREMENT")
+        if not_null_var.get():
+            selection.append("NOT NULL")
+
+        print(selection)
+
 
     win = Tk()
     win.geometry("1440x680+10+10")
@@ -142,7 +195,7 @@ def main():
                                     height=40,width=150)
     choose_file_btn.pack(side = 'top', anchor = 'nw', padx = 4, pady = 4)
 
-    file_name_label = Label(option1_frame, text="Hello World this is a file to grow the area of the sub urban company and mcuh more", font=("poppins", 10), fg="green", bg="white", justify='left')
+    file_name_label = Label(option1_frame, text="No file choosen!", font=("poppins", 10), fg="green", bg="white", justify='left')
     file_name_label.pack(side='top', anchor='nw', padx=4)
 
     checkbox_csv_to_db = ctk.CTkCheckBox(option1_frame, text="CSV to SQlite", command=lambda: checkbox_operations("A"),
@@ -217,7 +270,7 @@ def main():
 
     # label to display file name
 
-    file_name_to_edit_label = Label(file_select_frame, text="Hello World this is a file to grow the area of the sub urban company and mcuh more", font=("poppins", 10), fg="green", bg="white", justify='left')
+    file_name_to_edit_label = Label(file_select_frame, text="No file choosen!", font=("poppins", 10), fg="green", bg="white", justify='left')
     file_name_to_edit_label.pack(side='left', anchor='w', padx=4, pady=8)
 
     # Frame to edit the data. Tree View inside the edit frame
@@ -229,9 +282,102 @@ def main():
     edit_label = Label(edit_frame, text="Select Sqlite file to see tree view!", font=("poppins", 18, 'bold'), fg="#4F39F6", bg="white")
     edit_label.place(relx=0.5, rely=0.5, anchor='center')
 
-    create_sqlite_frame = Frame(feature_frame, bg="yellow")
+    # frame to create a sqlite table.
+
+    create_sqlite_frame = Frame(feature_frame, bg="white")
     create_sqlite_frame.propagate(False)
 
+    # Frame setup
+    sqFrame1 = Frame(create_sqlite_frame, bg="white", relief='ridge', bd=2, width=480)
+    sqFrame1.propagate(False)
+    sqFrame1.pack(side='left', anchor='nw', padx=4, pady=4, fill=Y)
+
+    # Configure grid columns
+    sqFrame1.grid_columnconfigure(0, weight=1)
+    sqFrame1.grid_columnconfigure(1, weight=2)
+
+    # Row 0 - SQLite File Name
+    db_name_label = Label(sqFrame1, text="Enter SQLite file name:", font=("poppins", 12), fg="black", bg="white")
+    db_name_label.grid(row=0, column=0, sticky="w", padx=8, pady=8)
+
+    db_name_entry_create = ctk.CTkEntry(sqFrame1, placeholder_text="Enter file name", font=("poppins", 14), height=35, border_color="#1447E6",
+                                        width=200)
+    db_name_entry_create.grid(row=0, column=1, padx=8, pady=8, sticky="ew")
+
+    # Row 1 - Column Name
+    column_name_label = Label(sqFrame1, text="Enter column name:", font=("poppins", 12), fg="black", bg="white")
+    column_name_label.grid(row=1, column=0, sticky="w", padx=8, pady=8)
+
+    column_name_entry = ctk.CTkEntry(sqFrame1, placeholder_text="Enter column name", font=("poppins", 14), height=35, border_color="#1447E6",
+                                     width=200)
+    column_name_entry.grid(row=1, column=1, padx=8, pady=8, sticky="ew")
+
+    properties_label = Label(sqFrame1, text="Properties:", font=("poppins", 14, 'bold'), bg="white")
+    properties_label.grid(row=2, column=0, padx=8, pady=8, sticky="w")
+
+    properties_frame = ctk.CTkFrame(sqFrame1, fg_color="white", border_width=2, border_color="#1447E6", height=200)
+    properties_frame.propagate(False)
+    properties_frame.grid(row=3, column=0, padx=8, pady=8, sticky="ew", columnspan=2)
+
+    # DataTypes
+    data_types = ['INTEGER', 'TEXT', 'REAL', 'BLOB']
+    data_type_var = IntVar(value=-1)  # No selection by default
+
+    propFrame_1 = Frame(properties_frame, bg="white", relief='ridge', bd=2)
+    propFrame_1.propagate(False)
+    propFrame_1.pack(side='left', fill='both', expand=True, padx=4, pady=4)
+
+    Label(propFrame_1, text="Data Types", bg="white", font=('Arial', 10, 'bold')).pack(pady=4)
+
+    for i, dtype in enumerate(data_types):
+        Radiobutton(propFrame_1, text=dtype,variable=data_type_var,value=i, bg="white", anchor='w', command=validate_selection).pack(fill='x', padx=10, pady=2)
+
+    # Column Properties
+    propFrame_2 = Frame(properties_frame, bg="white", relief='ridge', bd=2)
+    propFrame_2.propagate(False)
+    propFrame_2.pack(side='left', fill='both', expand=True, pady=4, padx=(0, 4))
+
+    Label(propFrame_2, text="Column Properties", bg="white", font=('Arial', 10, 'bold')).pack(pady=4)
+
+    # Property Variables
+    primary_key_var = BooleanVar()
+    auto_inc_var = BooleanVar()
+    not_null_var = BooleanVar()
+
+    Checkbutton(
+        propFrame_2,
+        text="Primary Key",
+        variable=primary_key_var,
+        bg="white"
+    ).pack(anchor='w', padx=10, pady=2)
+
+    Checkbutton(
+        propFrame_2,
+        text="Auto Increment",
+        variable=auto_inc_var,
+        bg="white",
+        command=validate_selection # this function ensures no invalid selection.
+    ).pack(anchor='w', padx=10, pady=2)
+
+    Checkbutton(
+        propFrame_2,
+        text="NOT NULL",
+        variable=not_null_var,
+        bg="white"
+    ).pack(anchor='w', padx=10, pady=2)
+
+
+    add_to_tree_btn = ctk.CTkButton(sqFrame1, text="Addm to Tree", font=("poppins", 16, 'bold'), text_color="black", fg_color="#FFB86A", bg_color="white", border_color="#FF692A",
+                                hover_color="#FF8904", height=35, border_width=2, command=print_selection)
+    add_to_tree_btn.grid(row=4, column=0, columnspan=2, padx=8, pady=8, sticky="ew") # this button to add the data to tree view.
+
+    sqFrame2 = Frame(create_sqlite_frame, bg="white", relief='ridge', bd=2, width=400)
+    sqFrame2.pack(side='left', anchor='nw', pady=4, fill='both', expand=True)
+
+    col_data_label = Label(sqFrame2, text="Add data to see tree view!", font=("poppins", 18, 'bold'), fg="#4F39F6", bg="white")
+    col_data_label.place(relx=0.5, rely=0.5, anchor='center')
+
+    
     add_data_to_db_frame = Frame(feature_frame, bg="grey")
     add_data_to_db_frame.propagate(False)
 
