@@ -4,3 +4,4 @@ venv
 Easydb.egg-info
 tempCodeRunnerFile.py
 __pycache__
+*.db
