@@ -1,9 +1,17 @@
 from tkinter import *
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from ttk import Treeview
 import customtkinter as ctk
 from importlib.resources import files
-import assets.logo
+from utils.sqlite_operations import potentialPrimaryKeys, validateHeaders, create_sqlite_table
+
+try:
+    import assets.logo
+    icon_path = files(assets.logo).joinpath("logo.ico")
+except ModuleNotFoundError:
+    import Easydb.assets.logo
+    icon_path = files(Easydb.assets.logo).joinpath("logo.ico")
+
 import csv
 
 def main():
@@ -26,6 +34,83 @@ def main():
         frame_to_show = button_dict.get(name)
         if frame_to_show:
             frame_to_show.pack(fill='both', expand=True, padx=2, pady=2)
+    
+    def create_treeview(headers, rows):
+        for item in tree.get_children():
+            tree.delete(item)
+        tree.configure(columns=headers)
+        # Configure columns
+        for header in headers:
+            tree.heading(header, text=header)
+            tree.column(header, width=120, anchor='center')  # Adjust width as needed
+
+        # Insert data into TreeView
+        for row in rows:
+            tree.insert('', 'end', values=row)
+
+    headers_g = []
+    rows_g = []
+
+    def readCSV(file:str):
+        filename = file # File name
+        rows = []
+        with open(filename, mode='r') as File:
+            csvreader = csv.reader(File)
+
+            cols = next(csvreader)
+
+            for row in csvreader:     # Read rows
+                rows.append(row)
+
+        ppk = potentialPrimaryKeys(data=rows, cols=cols)
+
+        opt_dropdown.configure(values = ppk)
+
+        create_treeview(headers=cols, rows=rows)
+
+        rows_g.append(rows)
+        headers_g.append(cols)
+
+    file_path_glo = []
+    
+    def open_file_dialog():
+        # Open file dialog and allow only CSV files
+        if checkbox_csv_to_db.get():
+            file_path = filedialog.askopenfilename(
+                title="Select a CSV file",
+                filetypes=[("CSV files", "*.csv")]
+            )
+            if file_path:
+                file_name_label.config(text=file_path)
+                readCSV(file=file_path)
+                file_path_glo.append(file_path)
+
+        elif checkbox_db_to_csv.get():
+            file_path = filedialog.askopenfilename(
+                title="Select a DB file",
+                filetypes=[("Database files", "*.db")]
+            )
+            if file_path:
+                file_name_label.config(text=file_path)
+        
+    def defaultFillDB():
+
+        file = file_path_glo[-1]
+        if opt_checkbox.get():
+            file_name = file.split("/")[-1].split(".")[0] + ".db"
+            db_name_entry.delete(0, "end")  # Clear existing text
+            db_name_entry.insert(0, file_name)
+        else:
+            db_name_entry.delete(0, "end")  # Clear existing text
+            db_name_entry.insert(0, "Enter Sqlite name")
+
+    def saveDB():
+        valid = validateHeaders(cols=headers_g[-1])
+        if valid:
+            create_sqlite_table(dbname=db_name_entry.get(), headers=headers_g[-1], rows=rows_g[-1], primary_keys=[opt_dropdown_var.get()])
+        else:
+            messagebox.showerror('Invalid Headers', 'Headers can not be duplicate or integer!')
+
 
     def checkbox_operations(selected):
         '''
@@ -124,7 +209,6 @@ def main():
     win = Tk()
     win.geometry("1440x680+10+10")
     win.title("EasyDB")
-    icon_path = icon_path = files(assets.logo).joinpath("logo.ico")
     win.iconbitmap(icon_path)
 
     # main body frame --> It will hold all the content.
@@ -174,11 +258,21 @@ def main():
     # tree frame to show data of the csv file in tabular form
 
     tree_frame = Frame(csv_to_sqlite_frame, bg="white", height=440, relief='ridge', bd=2)
+    tree_frame.propagate(False)
     tree_frame.pack(fill=X, side='top', anchor='n', pady=4, padx=4, ipady=0)
 
     tree_label = Label(tree_frame, text="Select CSV file to see tree view!", font=("poppins", 18, 'bold'), fg="#4F39F6", bg="white")
-    tree_label.place(relx=0.5, rely=0.5, anchor='center')
 
+    tree = Treeview(tree_frame, show='headings')
+    vsb = Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=vsb.set)
+    vsb.pack(side='right', fill='y')
+
+    # Add horizontal scrollbar
+    hsb = Scrollbar(tree_frame, orient="horizontal", command=tree.xview)
+    tree.configure(xscrollcommand=hsb.set)
+    hsb.pack(side='bottom', fill='x')
+    tree.pack(expand=True, fill='both')
     # this frame is for chooing file, updates and inputs
 
     options_frame = Frame(csv_to_sqlite_frame, bg="white", relief='ridge', bd=2)
@@ -192,7 +286,7 @@ def main():
     option1_frame.pack(side = 'left', fill=Y, pady=2, padx=(2, 0))
     choose_file_btn = ctk.CTkButton(option1_frame, text="Choose CSV File", font=("poppins", 14, 'bold'), text_color="black", bg_color="white",
                                     fg_color="#FFB86A", hover_color="#FF8904", border_color="#F54927", border_width=1, corner_radius=10,
-                                    height=40,width=150)
+                                    height=40,width=150, command=open_file_dialog)
     choose_file_btn.pack(side = 'top', anchor = 'nw', padx = 4, pady = 4)
 
     file_name_label = Label(option1_frame, text="No file choosen!", font=("poppins", 10), fg="green", bg="white", justify='left')
@@ -217,7 +311,7 @@ def main():
 
     # Checkbox
     opt_checkbox_var = ctk.BooleanVar()
-    opt_checkbox = ctk.CTkCheckBox(option2_frame, text="Same as CSV file", variable=opt_checkbox_var)
+    opt_checkbox = ctk.CTkCheckBox(option2_frame, text="Same as CSV file", variable=opt_checkbox_var, command=defaultFillDB)
     opt_checkbox.grid(row=0, column=1, padx=(5, 10), pady=10, sticky="w")
 
     # potential_label
@@ -232,7 +326,7 @@ def main():
 
     # Save Button
     db_save_button = ctk.CTkButton(option2_frame, text="Save", font=("poppins", 16, 'bold'), text_color="black", fg_color="#FFB86A", bg_color="white", border_color="#FF692A",
-                                hover_color="#FF8904", height=35, border_width=2)
+                                hover_color="#FF8904", height=35, border_width=2, command=saveDB)
     db_save_button.grid(row=2, column=0, columnspan=2, padx=10, pady=(2, 2), sticky="ew")
 
     # Optional: Make columns expand with weight if you're using grid layout
@@ -377,9 +471,43 @@ def main():
     col_data_label = Label(sqFrame2, text="Add data to see tree view!", font=("poppins", 18, 'bold'), fg="#4F39F6", bg="white")
     col_data_label.place(relx=0.5, rely=0.5, anchor='center')
 
-    
+
     add_data_to_db_frame = Frame(feature_frame, bg="grey")
     add_data_to_db_frame.propagate(False)
+    add_data_to_db_frame.propagate(False)
+
+    file_frame = Frame(add_data_to_db_frame, bg="white", relief='ridge', bd=2, height=40)
+    file_frame.propagate(False)
+    file_frame.pack(side='top', anchor='n', fill='both', padx=4, pady=4)
+
+    update_file_btn = ctk.CTkButton(file_frame, text="Select SQlite file", font=("poppins", 16, 'bold'), text_color="black", fg_color="#FFB86A", bg_color="white", border_color="#FF692A",
+                                    hover_color="#FF8904", height=35, border_width=2)
+    update_file_btn.pack(side = 'left', padx = 4, pady = 4)
+
+    dbs_name_label = Label(file_frame, text="No file choosen!", font=("poppins", 10), fg="green", bg="white", justify='left')
+    dbs_name_label.pack(side='left')
+
+    data_frame = Frame(add_data_to_db_frame, bg="white", relief='ridge', bd=2, width=400)
+    data_frame.propagate(False)
+    data_frame.pack(side='left', fill=Y, padx=4, pady=(0, 4))
+
+    data_label = Label(data_frame, text="Data", font=("poppins", 14, 'bold'), bg="white")
+    data_label.pack(anchor='n')
+
+    textbox_frame = ctk.CTkFrame(data_frame, fg_color="white", bg_color="white", border_color="#4F39F6", border_width=2)
+    textbox_frame.pack(anchor = 'n', padx = 4, fill = 'both', expand = True)
+
+    add_data_btn = ctk.CTkButton(data_frame, text="Add Data", font=("poppins", 16, 'bold'), text_color="black", fg_color="#FFB86A", bg_color="white", border_color="#FF692A",
+                                    hover_color="#FF8904", height=35, border_width=2)
+    add_data_btn.pack(anchor = 'n', padx = 4, fill = X, pady = (4, 0))
+
+    option_btn = ctk.CTkButton(data_frame, text="Select CSV or SQlite file to add", font=("poppins", 16, 'bold'), text_color="black", fg_color="#FFB86A", bg_color="white", border_color="#FF692A",
+                                    hover_color="#FF8904", height=35, border_width=2)
+    option_btn.pack(anchor = 'n', padx = 4, fill = X, pady = 4)
+
+
+    display_frame = Frame(add_data_to_db_frame, bg="pink", relief='ridge', bd=2)
+    display_frame.pack(side='left', fill='both', expand=True, padx=(0, 4), pady=(0, 4))
 
     modify_sqlite_frame = Frame(feature_frame, bg="purple")
     modify_sqlite_frame.propagate(False)
