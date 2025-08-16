@@ -3,3 +3,4 @@ dist
 venv
 Easydb.egg-info
 tempCodeRunnerFile.py
+__pycache__
