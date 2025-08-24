@@ -1,7 +1,0 @@
-setup.py
-Easydb/__init__.py
-Easydb/main.py
-Easydb.egg-info/PKG-INFO
-Easydb.egg-info/SOURCES.txt
-Easydb.egg-info/dependency_links.txt
-Easydb.egg-info/top_level.txt
