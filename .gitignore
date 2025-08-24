@@ -1,7 +1,7 @@
-setup.py
 test.py
 build
 dist
 __pycache__
 *.db
 venv
+Easydb.egg-info
