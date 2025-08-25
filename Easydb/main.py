@@ -1,12 +1,26 @@
 import sqlite3
-from typing import Annotated
-from pydantic import Field
-
+from typing import List, Tuple, Annotated
 class Connection:
-        def __init__(self,
-                      des: Annotated[str, Field(..., title="File Path", description="Enter the location (path) of sqlite file.")], 
-                      table: Annotated[str, Field(..., title="Table name", description="Give your table name.")]):
-            
+        """
+        A class to interact with an SQLite database table.
+        
+        Attributes:
+            conn (sqlite3.Connection): SQLite connection object.
+            cursor (sqlite3.Cursor): SQLite cursor object.
+            table (str): Name of the database table.
+            rows (int): Number of rows in the table.
+            cols (int): Number of columns in the table.
+        """
+        def __init__(self, des:str, table:str):
+            """
+            Initializes the connection to the SQLite database and retrieves table structure.
+
+            Parameters:
+                des (str): Path to the SQLite database file.
+                table (str): Name of the table to connect to.
+
+            If the table doesn't exist, sets rows and cols to 0 and prints an error message.
+            """
             self.conn = sqlite3.connect(des)
             self.cursor = self.conn.cursor()
             self.table = table
@@ -23,19 +37,29 @@ class Connection:
                 self.rows, self.cols = 0, 0
                 print(f"No such table:{self.table}")
 
-        def properties(self, row: Annotated[bool, Field(default=False, title="Total rows", description="True to show total rows.")], 
-                       col: Annotated[bool, Field(default=False, title="Total columns", description="True to show total columns.")]):
-            
+        def properties(self, row:bool, col: bool):
+            """
+            Displays the number of rows and/or columns in the connected table.
+
+            Parameters:
+                row (bool): Whether to display the number of rows.
+                col (bool): Whether to display the number of columns.
+            """
             if row:
                 print(f"Rows = {self.rows}", end=" ")
             if col:
                 print(f"Columns = {self.cols}")
 
-        def addData(self, 
-                    items: Annotated[tuple[list], Field(..., title="List of items to be added.", 
-                                                        description="It should be a tuple of list. The length of each item should be equal to the length of total columns", 
-                                                        examples=["if single item: (['A', 'B'],)"])]):
-            
+        def addData(self, items:tuple[list]):
+            """
+            Adds multiple rows of data to the table.
+
+            Parameters:
+                items (tuple[list]): A tuple containing lists, each representing a row to insert.
+
+            The method checks if the number of values matches the number of columns before inserting.
+            If not, it prints an error message.
+            """
             self.cursor.execute("SELECT * FROM GEEK LIMIT 0;")
             col_name = tuple([description[0] for description in self.cursor.description])
             for item in items:
@@ -48,10 +72,18 @@ class Connection:
                     print("items must be a tuple of list.")
                     
             self.conn.commit()
-        
-        def updateData(self, update_cols: Annotated[list, Field(..., title="Columns to be updated.", description="Give the list of columns name.")], 
-                       update_vals:Annotated[list, Field(..., title="Updated Values.", description="Give the list of values to be updated.")], 
-                       condition: Annotated[dict, Field(..., title="Add condition", description="Give condition for where clause.", examples=["{'id':10}"])]):
+            
+        def updateData(self, update_cols:list, update_vals:list, condition:dict):
+            """
+            Updates existing data in the table based on given conditions.
+
+            Parameters:
+                update_cols (list): List of column names to update.
+                update_vals (list): List of new values corresponding to update_cols.
+                condition (dict): A dictionary specifying the WHERE clause (column: value).
+
+            If the number of columns and values don't match, it prints an error.
+            """
             data = {
                 "update": update_cols,
                 "val": update_vals,
