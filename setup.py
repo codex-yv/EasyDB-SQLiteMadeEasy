@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="Easydb",
-    version='1.4',
+    version='2.1',
     packages= find_packages(),
     include_package_data=True,
     package_data={ # to add package used in main.py file

@@ -37,7 +37,7 @@ class Connection:
                 self.rows, self.cols = 0, 0
                 print(f"No such table:{self.table}")
 
-        def properties(self, row:bool, col: bool):
+        def properties(self, row:bool = True, col: bool = True):
             """
             Displays the number of rows and/or columns in the connected table.
 
@@ -106,6 +106,47 @@ class Connection:
                 print("The length of update_cols and update_vals are not equal!")
             
             self.conn.close()
+        
+        def deleteData(self, del_all:bool = False, condition: dict = None ):
+            """
+            Deletes data from the table. Supports both unconditional (delete all) 
+            and conditional deletion based on specified criteria.
+
+            Parameters:
+                dell_all (bool): Defaults to False. If True, deletes all data from the table.
+                condition (dict): A dictionary specifying the condition for deletion. 
+                                Used only if `dell_all` is False.
+
+            Example:
+                Condition format:
+                {'COLUMN_NAME': 'Youraj Verma'}
+            """
+
+            if condition is not None:
+                values = list(condition.values())
+                keys = list(condition.keys())
+                if not del_all:
+                    if len(values) == len(keys):
+                        try:
+                            sql = f"DELETE FROM {self.table} WHERE {keys[0]} == ?"
+                            self.cursor.execute(sql, values[0])
+                            self.conn.commit()
+                            self.conn.close()   
+                        except sqlite3.OperationalError as e:
+                            print("Unsuccessful Operation.", e)
+                    else:
+                        print("There must be only one condition.When dell_all is True then you must not provide other parameter!")
+                else:
+                    print("Operation Can't be Done!")
+
+            if del_all is True:
+                self.cursor.execute(f"DELETE FROM {self.table}")
+                self.conn.commit()
+                self.conn.close()
+            else:
+                print("Either give condition or set the del_all = True.")
+            
+
 
                   
 
