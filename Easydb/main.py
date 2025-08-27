@@ -1,5 +1,5 @@
 import sqlite3
-from typing import List, Tuple, Annotated
+
 class Connection:
         """
         A class to interact with an SQLite database table.
@@ -122,7 +122,7 @@ class Connection:
                 {'COLUMN_NAME': 'Youraj Verma'}
             """
 
-            if condition is not None:
+            if condition is not None and del_all is False:
                 values = list(condition.values())
                 keys = list(condition.keys())
                 if not del_all:
@@ -145,10 +145,7 @@ class Connection:
                 self.conn.close()
             else:
                 print("Either give condition or set the del_all = True.")
-            
-
-
-                  
+        
 
 
 def main():
